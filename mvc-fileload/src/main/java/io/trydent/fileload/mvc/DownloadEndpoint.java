@@ -31,15 +31,15 @@ public class DownloadEndpoint {
 	}
 
 	@RequestMapping(method = GET, path = "/download")
-	public HttpEntity<byte[]> download(@RequestParam String file) {
+	public HttpEntity<byte[]> download(@RequestParam String fileName) {
 		final String folderName = this.fileload.temporaryFolder();
 		final File folder = new File(folderName);
 
 		final Collection<File> files = FileUtils.listFiles(folder, new String[] {}, false);
 
 		final Optional<byte[]> bytes = files.stream()
-			.filter(f -> f.getName().equals(file))
-			.map(f -> Try.of(() -> FileUtils.openInputStream(f))
+			.filter(file -> file.getName().equals(fileName))
+			.map(file -> Try.of(() -> FileUtils.openInputStream(file))
 				.get())
 			.map(stream -> Try.of(() -> IOUtils.toByteArray(stream))
 				.get())
@@ -49,9 +49,9 @@ public class DownloadEndpoint {
 		final byte[] content = bytes.get();
 
 		final HttpHeaders headers = new HttpHeaders();
-		if (file.endsWith(".pdf")) headers.setContentType(MediaType.parseMediaType("application/pdf"));
+		if (fileName.endsWith(".pdf")) headers.setContentType(MediaType.parseMediaType("application/pdf"));
 
-		headers.setContentDispositionFormData(file, file);
+		headers.setContentDispositionFormData(fileName, fileName);
 		headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
 		return new ResponseEntity<>(bytes.get(), headers, HttpStatus.FOUND);
